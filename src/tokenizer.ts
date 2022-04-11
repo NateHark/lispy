@@ -1,3 +1,5 @@
+import { InvalidSyntaxError } from "./exceptions";
+
 export enum TokenType {
     Number,
     String,
@@ -14,20 +16,30 @@ export class Token {
 }
 
 export class Tokenizer {
-    readonly input: string[];
+    readonly input: string;
 
-    pos: number = 0;
+    cursor: number = 0;
 
-    constructor(formula: string) {
-        this.input = Array.from(formula);
+    constructor(input: string) {
+        this.input = input;
     }
 
     hasMoreTokens(): boolean {
-        return this.pos < this.input.length; 
+        return this.cursor < this.input.length; 
     }
 
     isEOF(): boolean {
-        return this.pos == this.input.length;
+        return this.cursor == this.input.length;
+    }
+
+    match(regexp: RegExp, str: string): String | null {
+        const matched = regexp.exec(str);
+        if (matched == null) {
+            return null;
+        }
+
+        this.cursor += matched[0].length;
+        return matched[0];
     }
 
     getNextToken(): any  {
@@ -35,26 +47,26 @@ export class Tokenizer {
             return null;
         }
 
-        // NumericLiteral
-        if (!Number.isNaN(Number(this.input[this.pos]))) {
-            let number = '';
-            while (!Number.isNaN(Number(this.input[this.pos]))) {
-                number += this.input[this.pos++];
+        const str = this.input.slice(this.cursor);
+
+        for (const [regexp, tokenType] of TokenSpec) {
+            const tokenValue = this.match(regexp, str);
+            if (tokenValue == null) {
+                continue;
             }
 
-            return new Token(TokenType.Number, Number(number));
+            return new Token(tokenType, tokenValue);
         }
 
-        // StringLiteral
-        if (this.input[this.pos] === '"') {
-            let s = this.input[this.pos++];
-            while (this.input[this.pos] !== '"' && !this.isEOF()) {
-                s += this.input[this.pos++];
-            }
-            // Consume closing double-quote
-            s+= this.input[this.pos++];
-
-            return new Token(TokenType.String, s);
-        }
+        throw new InvalidSyntaxError(`Unexpected token: ${str[0]}`);
     }
 }
+
+const TokenSpec: Array<[RegExp, TokenType]>  = [
+    // Numbers
+    [/^\d+/, TokenType.Number],
+
+    // Strings
+    [/^"[^"]*"/, TokenType.String],
+    [/^'[^']*'/, TokenType.String],
+];

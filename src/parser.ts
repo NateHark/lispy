@@ -1,4 +1,5 @@
 import { ASTNode, ASTNodeType } from './ast';
+import { InvalidSyntaxError } from './exceptions';
 import { Token, Tokenizer, TokenType } from './tokenizer';
 
 export class Parser {
@@ -68,7 +69,7 @@ export class Parser {
      */
     numericLiteral(): ASTNode {
         let token = this.eat(TokenType.Number);
-        return new ASTNode(ASTNodeType.NumericLiteral, token.value);
+        return new ASTNode(ASTNodeType.NumericLiteral, Number(token.value));
     }
 
     /**
@@ -79,11 +80,5 @@ export class Parser {
     stringLiteral(): ASTNode {
         let token = this.eat(TokenType.String);
         return new ASTNode(ASTNodeType.StringLiteral, token.value.replaceAll('"', ''));
-    }
-}
-
-export class InvalidSyntaxError extends Error {
-    constructor(message: string) {
-        super(message);
     }
 }

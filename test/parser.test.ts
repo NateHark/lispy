@@ -3,6 +3,7 @@ import { Parser } from '../src/parser';
 
 
 describe('Parser', () => {
+
   describe('NumericLiteral', () => {
     it('Program is a valid NumericLiteral', () => {
       const parser = new Parser('42');
@@ -22,4 +23,5 @@ describe('Parser', () => {
       expect(stringLiteral.value).toBe('hello');
     });
   });
+  
 });

@@ -7,18 +7,25 @@ describe('Tokenizer', () => {
       let tokenizer = new Tokenizer('1');
       let token = tokenizer.getNextToken();
       expect(token.type).toBe(TokenType.Number);
-      expect(token.value).toBe(1);
+      expect(token.value).toBe('1');
     });
 
     it('should return a multi digit number', () => {
       let tokenizer = new Tokenizer('123');
       let token = tokenizer.getNextToken();
       expect(token.type).toBe(TokenType.Number);
-      expect(token.value).toBe(123);
+      expect(token.value).toBe('123');
     });
   });
 
   describe('StringLiteral', ()=> {
+    it('should return an empty string token', () => {
+      let tokenizer = new Tokenizer('\'\'');
+      let token = tokenizer.getNextToken();
+      expect(token.type).toBe(TokenType.String);
+      expect(token.value).toBe('\'\'');
+    });
+
     it('should return an empty string token', () => {
       let tokenizer = new Tokenizer('""');
       let token = tokenizer.getNextToken();
