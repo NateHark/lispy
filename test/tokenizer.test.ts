@@ -16,6 +16,13 @@ describe('Tokenizer', () => {
       expect(token.type).toBe(TokenType.Number);
       expect(token.value).toBe('123');
     });
+
+    it('should ignore whitespace around number', () => {
+      let tokenizer = new Tokenizer('  123  ');
+      let token = tokenizer.getNextToken();
+      expect(token.type).toBe(TokenType.Number);
+      expect(token.value).toBe('123');
+    });
   });
 
   describe('StringLiteral', ()=> {
@@ -45,6 +52,20 @@ describe('Tokenizer', () => {
       let token = tokenizer.getNextToken();
       expect(token.type).toBe(TokenType.String);
       expect(token.value).toBe('"abc"');
+    });
+
+    it('should ignore whitespace around string', () => {
+      let tokenizer = new Tokenizer('  "test"   ');
+      let token = tokenizer.getNextToken();
+      expect(token.type).toBe(TokenType.String);
+      expect(token.value).toBe('"test"');
+    });
+
+    it('should preserve whitespace in string', () => {
+      let tokenizer = new Tokenizer('"  test  "');
+      let token = tokenizer.getNextToken();
+      expect(token.type).toBe(TokenType.String);
+      expect(token.value).toBe('"  test  "');
     });
 
     it('should return a number as a string', () => {

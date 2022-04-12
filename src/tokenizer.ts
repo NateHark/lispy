@@ -1,6 +1,6 @@
 import { InvalidSyntaxError } from "./exceptions";
-
 export enum TokenType {
+    Whitespace,
     Number,
     String,
 }
@@ -14,6 +14,18 @@ export class Token {
         this.value = value;
     }
 }
+
+const TokenSpec: Array<[RegExp, TokenType]>  = [
+    // Whitespace
+    [/^\s+/, TokenType.Whitespace],
+
+    // Numbers
+    [/^\d+/, TokenType.Number],
+
+    // Strings
+    [/^"[^"]*"/, TokenType.String],
+    [/^'[^']*'/, TokenType.String],
+];
 
 export class Tokenizer {
     readonly input: string;
@@ -55,18 +67,13 @@ export class Tokenizer {
                 continue;
             }
 
+            if (tokenType === TokenType.Whitespace) {
+                return this.getNextToken();
+            }
+
             return new Token(tokenType, tokenValue);
         }
 
         throw new InvalidSyntaxError(`Unexpected token: ${str[0]}`);
     }
 }
-
-const TokenSpec: Array<[RegExp, TokenType]>  = [
-    // Numbers
-    [/^\d+/, TokenType.Number],
-
-    // Strings
-    [/^"[^"]*"/, TokenType.String],
-    [/^'[^']*'/, TokenType.String],
-];
