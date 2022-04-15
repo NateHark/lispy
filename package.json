@@ -1,7 +1,7 @@
 {
-  "name": "calc-engine",
-  "version": "1.0.0",
-  "description": "A formula parser and evaluator",
+  "name": "lispy",
+  "version": "0.1.0",
+  "description": "A parser and interpreter for a Lisp-like toy language",
   "main": "index.js",
   "scripts": {
     "dev": "tsc-watch --onSuccess \"npm start\"",
