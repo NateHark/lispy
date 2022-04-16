@@ -65,6 +65,31 @@ export default class Interpreter {
             return this.eval(exp[1], env) / this.eval(exp[2], env);
         }
 
+        // Greater than
+        if (exp[0] === '>') {
+            return this.eval(exp[1], env) > this.eval(exp[2], env);
+        }
+
+        // Greater than or equals
+        if (exp[0] === '>=') {
+            return this.eval(exp[1], env) >= this.eval(exp[2], env);
+        }
+
+        // Less than
+        if (exp[0] === '<') {
+            return this.eval(exp[1], env) < this.eval(exp[2], env);
+        }
+
+        // Less than or equals
+        if (exp[0] === '<=') {
+            return this.eval(exp[1], env) <= this.eval(exp[2], env);
+        }
+
+        // Equals
+        if (exp[0] === '=') {
+            return this.eval(exp[1], env) === this.eval(exp[2], env);
+        }
+
         // Block
         if (exp[0] === 'begin') {
             const blockEnv = new Environment(new Map(), env);
@@ -86,6 +111,25 @@ export default class Interpreter {
         // Variable access: foo
         if (this.isVariableName(exp)) {
             return env.lookup(exp);
+        }
+
+        // if-expression
+        if (exp[0] === 'if') {
+            const [_tag, condition, consequent, alternate] = exp;
+            if (this.eval(condition, env)) {
+                return this.eval(consequent, env);
+            }
+            return this.eval(alternate, env);
+        }
+
+        // while-expression
+        if (exp[0] === 'while') {
+            const [_tag, condition, body] = exp;
+            let result;
+            while(this.eval(condition, env)) {
+                 result = this.eval(body, env);
+            }
+            return result;
         }
 
         throw 'FIX ME';
