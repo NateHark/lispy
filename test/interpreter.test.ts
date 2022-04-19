@@ -186,4 +186,44 @@ describe('Interpreter Tests', () => {
         });
     });
 
+    describe('Built-in Function Tests', () => {
+        it('should execute + function', () => {
+             expect(test('(+ 1 5)')).toBe(6); 
+        });
+
+        it('should execute + function', () => {
+            expect(test('(+ (+ 2 3) 5)')).toBe(10);
+        });
+
+        it('should execute + function', () => {
+            expect(test('(+ (* 2 3) 5)')).toBe(11);
+        });
+
+        it('should execute > function', () => {
+             expect(test('(> 1 5)')).toBe(false);
+        });
+
+        it('should execute < function', () => {
+             expect(test('(< 1 5)')).toBe(true);
+        });
+
+        it('should execute >= function', () => {
+            expect(test('(>= 5 5)')).toBe(true);
+        });
+
+        it('should execute <= function', () => {
+            expect(test('(<= 5 5)')).toBe(true);
+        });
+        
+        it('should execute = function', () => {
+            expect(test('(= 5 5)')).toBe(true);
+        });
+
+        it('should execute print function', () => {
+            const consoleSpy = jest.spyOn(console, 'log');
+            test('(print "hello world")');
+            expect(consoleSpy).toHaveBeenCalledWith('hello world');
+        });
+    });
+
 });

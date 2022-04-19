@@ -1,5 +1,52 @@
 import Environment from "./environment";
 
+const GlobalEnvironment = () => {
+    return new Environment(new Map<string, any>([
+        ['null', null],
+
+        ['true', true],
+        ['false', false],
+
+        // Mathmatical operators
+        ['+', (op1: number, op2: number) => { 
+            return op1 + op2; 
+        }],
+        ['*', (op1: number, op2: number) => { 
+            return op1 * op2; 
+        }],
+        ['-', (op1: number, op2: number | null = null) => { 
+            if (op2 == null) {
+                return -op1;
+            }
+            return op1 - op2; 
+        }],
+        ['/', (op1: number, op2: number) => { 
+            return op1 / op2; 
+        }],
+
+        // Comparison functions
+        ['>', (op1: number, op2: number) => { 
+            return op1 > op2;
+        }],
+        ['<', (op1: number, op2: number) => { 
+            return op1 < op2;
+        }],
+        ['>=', (op1: number, op2: number) => { 
+            return op1 >= op2; 
+        }],
+        ['<=', (op1: number, op2: number) => { 
+            return op1 <= op2;
+        }],
+        ['=', (op1: number, op2: number) => { 
+            return op1 === op2; 
+        }],
+
+        ['print', (...args: any[]) => {
+            console.log(...args);
+        }],
+    ]))
+};
+
 export default class Interpreter {
     private isNumber(exp: any): boolean {
         return typeof exp === 'number';
@@ -10,7 +57,7 @@ export default class Interpreter {
     }
 
     private isVariableName(exp: any): boolean {
-        return typeof exp === 'string' && /^[a-zA-Z][a-zA-Z0-9_]*$/.exec(exp) !== null;
+        return typeof exp === 'string' && /^[+\-*/<>=a-zA-Z0-9_]*$/.exec(exp) !== null;
     }
 
     private evalBlock(block: any, env: Environment): any {
@@ -27,7 +74,7 @@ export default class Interpreter {
 
     readonly global: Environment;
 
-    constructor(global = new Environment()) {
+    constructor(global = GlobalEnvironment()) {
         this.global = global;
     }
 
@@ -43,51 +90,6 @@ export default class Interpreter {
         // String literal
         if (this.isString(exp)) {
             return exp.slice(1, -1);
-        }
-
-        // Addition
-        if (exp[0] === '+') {
-            return this.eval(exp[1], env) + this.eval(exp[2], env);
-        }
-
-        // Subtraction
-        if (exp[0] === '-') {
-            return this.eval(exp[1], env) - this.eval(exp[2], env);
-        }
-
-        // Multiplication
-        if (exp[0] === '*') {
-            return this.eval(exp[1], env) * this.eval(exp[2], env);
-        }
-
-        // Division
-        if (exp[0] === '/') {
-            return this.eval(exp[1], env) / this.eval(exp[2], env);
-        }
-
-        // Greater than
-        if (exp[0] === '>') {
-            return this.eval(exp[1], env) > this.eval(exp[2], env);
-        }
-
-        // Greater than or equals
-        if (exp[0] === '>=') {
-            return this.eval(exp[1], env) >= this.eval(exp[2], env);
-        }
-
-        // Less than
-        if (exp[0] === '<') {
-            return this.eval(exp[1], env) < this.eval(exp[2], env);
-        }
-
-        // Less than or equals
-        if (exp[0] === '<=') {
-            return this.eval(exp[1], env) <= this.eval(exp[2], env);
-        }
-
-        // Equals
-        if (exp[0] === '=') {
-            return this.eval(exp[1], env) === this.eval(exp[2], env);
         }
 
         // Block
@@ -130,6 +132,21 @@ export default class Interpreter {
                  result = this.eval(body, env);
             }
             return result;
+        }
+
+        // Function
+        if (Array.isArray(exp)) {
+            // First arg is the function name. Call eval() to look up the function name
+            // in the environment
+            const fn = this.eval(exp[0], env);
+
+            // Eval function arguments
+            const args = exp.slice(1).map(arg => this.eval(arg, env)); 
+
+            // Handle native functions
+            if (typeof fn === 'function') {
+                return fn(...args);
+            }
         }
 
         throw 'FIX ME';
