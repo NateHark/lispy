@@ -258,5 +258,40 @@ describe('Interpreter Tests', () => {
             )).toBe(6); 
         });
     });
+    
+    describe('Lambda Function Tests', () => {
+        it('should execute lambda function', () => {
+            expect(test(
+                `(begin
+                    (def handler (callback)
+                        (begin
+                            (var x 10)
+                            (var y 20)
+                            (callback (+ x y))
+                        )
+                    )
+                    (handler (lambda (data) (* data 10)))
+                )
+                `
+            )).toBe(300);
+        });
+
+        it('should execute immediately invoked lambda expression', () => {
+            expect(test(
+                `((lambda (x) (* x x)) 2)
+                ` 
+            )).toBe(4);
+        });
+        
+        it('should save lambda function to a variable', () => {
+            expect(test(
+                `(begin
+                    (var square (lambda (x) (* x x)))
+                    (square 2)
+                )
+                ` 
+            )).toBe(4);
+        });
+    });
 
 });
