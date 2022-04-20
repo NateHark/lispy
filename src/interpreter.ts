@@ -72,6 +72,13 @@ export default class Interpreter {
         return result;
     }
 
+    private evalBody(body: any, env: Environment): any {
+        if (body[0] === 'begin') {
+            return this.evalBlock(body, env);
+        }
+        return this.eval(body, env);
+    }
+
     readonly global: Environment;
 
     constructor(global = GlobalEnvironment()) {
@@ -134,7 +141,20 @@ export default class Interpreter {
             return result;
         }
 
-        // Function
+        // Function declaration
+        if (exp[0] === 'def') {
+            const [_tag, name, params, body] = exp;
+
+            const fn = {
+                params,
+                body,
+                env
+            }
+
+            return env.define(name, fn);
+        }
+
+        // Function call
         if (Array.isArray(exp)) {
             // First arg is the function name. Call eval() to look up the function name
             // in the environment
@@ -147,6 +167,20 @@ export default class Interpreter {
             if (typeof fn === 'function') {
                 return fn(...args);
             }
+
+            // User-defined functions
+            const activationRecord = new Map<string, any>();
+
+            fn.params.forEach((param: string, index: number) => {
+                activationRecord.set(param, args[index]);
+            });
+
+            const activationEnv = new Environment(
+                activationRecord,
+                fn.env, // captured environment
+            );
+
+            return this.evalBody(fn.body, activationEnv);
         }
 
         throw 'FIX ME';

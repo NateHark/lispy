@@ -226,4 +226,37 @@ describe('Interpreter Tests', () => {
         });
     });
 
+    describe('User-defined Function Tests', () => {
+        it('should execute square function', () => {
+            expect(test(
+                `(begin
+                    (def square (x)
+                        (* x x))
+                    (square 2)
+                )`
+            )).toBe(4);
+        });
+
+        it('should support function closures', () => {
+            expect(test(
+                `(begin
+                    (var a 1)
+                    (def outer ()
+                        (begin
+                            (var b 2)
+                            (def inner()
+                                (begin
+                                    (var c 3)
+                                    (+ a (+ b c))
+                                )
+                            )
+                            (inner)
+                        )
+                    )
+                    (outer)
+                )`
+            )).toBe(6); 
+        });
+    });
+
 });
