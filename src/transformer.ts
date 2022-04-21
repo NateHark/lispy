@@ -27,4 +27,10 @@ export default class Transformer {
 
         return ifExp;
     }
+
+    transformForToWhile(forExp: any[]): any[] {
+        const [_tag, init, condition, modifier, exp] = forExp;
+
+        return ['begin', init, ['while', condition, ['begin', exp, modifier]]];
+    }
 }

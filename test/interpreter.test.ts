@@ -324,15 +324,29 @@ describe('Interpreter Tests', () => {
         });
 
         it('should return the default condition', () => {
-            expect(test(
-                `(begin
+            expect(test(`
+                (begin
                     (var x 0)
                     (switch ((> x 1) 100)
                             ((= x 1) 200)
                             (else 0))
                 )
-                `
-            )).toBe(0);
+            `)).toBe(0);
+        });
+    });
+
+    describe('For-Loop Tests', () => {
+        it('should execute for loop', () => {
+            expect(test(`
+                (begin
+                    (var x 0)
+                    (for (var y 0)
+                         (< y 10)
+                         (set y (+ y 1))
+                         (set x (+ x y)))
+                    x
+                )
+            `)).toBe(45);
         });
     });
 });

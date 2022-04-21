@@ -140,6 +140,12 @@ export default class Interpreter {
             return this.eval(ifExp, env);
         }
 
+        // for expression
+        if (exp[0] === 'for') {
+            const whileExp = this.transformer.transformForToWhile(exp);
+            return this.eval(whileExp, env);
+        }
+
         // while-expression
         if (exp[0] === 'while') {
             const [_tag, condition, body] = exp;
