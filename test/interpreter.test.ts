@@ -342,11 +342,33 @@ describe('Interpreter Tests', () => {
                     (var x 0)
                     (for (var y 0)
                          (< y 10)
-                         (set y (+ y 1))
+                         (++ y) 
                          (set x (+ x y)))
                     x
                 )
             `)).toBe(45);
+        });
+    });
+
+    describe('Increment and Decrement Tests', () => {
+        it('should increment x', () => {
+            expect(test(`
+                (begin
+                    (var x 0)
+                    (++ x)
+                    x
+                )
+            `)).toBe(1);
+        });
+
+        it('should decrement x', () => {
+            expect(test(`
+                (begin
+                    (var x 1)
+                    (-- x)
+                    x
+                )
+            `)).toBe(0);
         });
     });
 });

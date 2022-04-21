@@ -102,6 +102,18 @@ export default class Interpreter {
             return exp.slice(1, -1);
         }
 
+        // autoincrement
+        if (exp[0] === '++') {
+            const assignmentExp = this.transformer.transformIncrementToAssignment(exp);
+            return this.eval(assignmentExp, env);
+        }
+
+        // autoincrement
+        if (exp[0] === '--') {
+            const assignmentExp = this.transformer.transformDecrementToAssignment(exp);
+            return this.eval(assignmentExp, env);
+        }
+
         // Block
         if (exp[0] === 'begin') {
             const blockEnv = new Environment(new Map(), env);

@@ -33,4 +33,16 @@ export default class Transformer {
 
         return ['begin', init, ['while', condition, ['begin', exp, modifier]]];
     }
+
+    transformIncrementToAssignment(incExp: any[]): any[] {
+        const [_tag, name] = incExp;
+
+        return ['set', name, ['+', name, 1]];
+    }
+
+    transformDecrementToAssignment(decExp: any[]): any[] {
+        const [_tag, name] = decExp;
+
+        return ['set', name, ['-', name, 1]];
+    }
 }
