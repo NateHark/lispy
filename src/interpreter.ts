@@ -1,4 +1,5 @@
 import Environment from "./environment";
+import Transformer from "./transformer";
 
 const GlobalEnvironment = () => {
     return new Environment(new Map<string, any>([
@@ -80,9 +81,11 @@ export default class Interpreter {
     }
 
     readonly global: Environment;
+    readonly transformer: Transformer;
 
     constructor(global = GlobalEnvironment()) {
         this.global = global;
+        this.transformer = new Transformer();
     }
 
     /**
@@ -131,6 +134,12 @@ export default class Interpreter {
             return this.eval(alternate, env);
         }
 
+        // switch expression
+        if (exp[0] === 'switch') {
+            const ifExp = this.transformer.transformSwitchToIf(exp);
+            return this.eval(ifExp, env);
+        }
+
         // while-expression
         if (exp[0] === 'while') {
             const [_tag, condition, body] = exp;
@@ -144,11 +153,7 @@ export default class Interpreter {
         // Function declaration (def square (x) (* x x))
         // Syntactic sugar for: (var square (lambda (x) (* x x)))
         if (exp[0] === 'def') {
-            const [_tag, name, params, body] = exp;
-
-            // Transpile to variable declaration
-            const varExp = ['var', name, ['lambda', params, body]];
-
+            const varExp = this.transformer.transformDefToVarLambda(exp);
             return this.eval(varExp, env);
         }
 

@@ -294,4 +294,45 @@ describe('Interpreter Tests', () => {
         });
     });
 
+    describe('Recursion Tests', () => {
+        it('should execute recursive function', () => {
+            expect(test(
+                `(begin
+                    (def factorial (x)
+                        (if (= x 1)
+                            1
+                            (* x (factorial (- x 1)))
+                        )
+                    )     
+                    (factorial 5)
+                )`
+            )).toBe(120);
+        });
+    });
+
+    describe('Switch Statement Tests', () => {
+        it('should return a matching condition', () => {
+            expect(test(
+                `(begin
+                    (var x 1)
+                    (switch ((> x 1) 100)
+                            ((= x 1) 200)
+                            (else 0))
+                )
+                `
+            )).toBe(200);
+        });
+
+        it('should return the default condition', () => {
+            expect(test(
+                `(begin
+                    (var x 0)
+                    (switch ((> x 1) 100)
+                            ((= x 1) 200)
+                            (else 0))
+                )
+                `
+            )).toBe(0);
+        });
+    });
 });
