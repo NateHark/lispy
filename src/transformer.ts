@@ -40,9 +40,21 @@ export default class Transformer {
         return ['set', name, ['+', name, 1]];
     }
 
+    transformIncrementByValueToAssignment(incExp: any[]): any[] {
+        const [_tag, name, value] = incExp;
+
+        return ['set', name, ['+', name, value]];
+    }
+
     transformDecrementToAssignment(decExp: any[]): any[] {
         const [_tag, name] = decExp;
 
         return ['set', name, ['-', name, 1]];
+    }
+
+    transformDecrementByValueToAssignment(decExp: any[]): any[] {
+        const [_tag, name, value] = decExp;
+
+        return ['set', name, ['-', name, value]];
     }
 }

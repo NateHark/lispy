@@ -361,11 +361,31 @@ describe('Interpreter Tests', () => {
             `)).toBe(1);
         });
 
+        it('should increment x by 2', () => {
+            expect(test(`
+                (begin
+                    (var x 0)
+                    (+= x 2)
+                    x
+                )
+            `)).toBe(2);
+        });
+
         it('should decrement x', () => {
             expect(test(`
                 (begin
                     (var x 1)
                     (-- x)
+                    x
+                )
+            `)).toBe(0);
+        });
+
+        it('should decrement x by 2', () => {
+            expect(test(`
+                (begin
+                    (var x 2)
+                    (-= x 2)
                     x
                 )
             `)).toBe(0);

@@ -102,15 +102,27 @@ export default class Interpreter {
             return exp.slice(1, -1);
         }
 
-        // autoincrement
+        // increment
         if (exp[0] === '++') {
             const assignmentExp = this.transformer.transformIncrementToAssignment(exp);
             return this.eval(assignmentExp, env);
         }
 
-        // autoincrement
+        // increment by value
+        if (exp[0] === '+=') {
+            const assignmentExp = this.transformer.transformIncrementByValueToAssignment(exp);
+            return this.eval(assignmentExp, env);
+        }
+
+        // decrement
         if (exp[0] === '--') {
             const assignmentExp = this.transformer.transformDecrementToAssignment(exp);
+            return this.eval(assignmentExp, env);
+        }
+
+        // decrement by value
+        if (exp[0] === '-=') {
+            const assignmentExp = this.transformer.transformDecrementByValueToAssignment(exp);
             return this.eval(assignmentExp, env);
         }
 
