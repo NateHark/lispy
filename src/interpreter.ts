@@ -80,6 +80,21 @@ export default class Interpreter {
         return this.eval(body, env);
     }
 
+    private callUserDefinedFunction(fn: any, args: any): any {
+        const activationRecord = new Map<string, any>();
+
+        fn.params.forEach((param: string, index: number) => {
+            activationRecord.set(param, args[index]);
+        });
+
+        const activationEnv = new Environment(
+            activationRecord,
+            fn.env, // captured environment
+        );
+
+        return this.evalBody(fn.body, activationEnv);
+    }
+
     readonly global: Environment;
     readonly transformer: Transformer;
 
@@ -140,8 +155,13 @@ export default class Interpreter {
 
         // Variable assignment
         if (exp[0] === 'set') {
-            const [_, name, value] = exp;
-            return env.assign(name, this.eval(value, env));
+            const [_, ref, value] = exp;
+            if (ref[0] === 'prop') {
+                const [_tag, instance, propName] = ref;
+                const instanceEnv = this.eval(instance, env);
+                return instanceEnv.define(propName, this.eval(value, env));
+            }
+            return env.assign(ref, this.eval(value, env));
         }
 
         // Variable access: foo
@@ -198,6 +218,44 @@ export default class Interpreter {
             };
         }
 
+        // Class declaration
+        if (exp[0] === 'class') {
+            const [_tag, name, parent, body] = exp;
+           
+            const parentEnv = this.eval(parent, env) || env;
+            const classEnv = new Environment(new Map<string, any>(), parentEnv);
+
+            this.evalBody(body, classEnv);
+
+            return env.define(name, classEnv);
+        }
+
+        // Class instantation
+        if (exp[0] === 'new') {
+            const classEnv = this.eval(exp[1], env);
+            const instanceEnv = new Environment(new Map<string, any>(), classEnv); 
+
+            const args = exp.slice(2).map((arg: any) => this.eval(arg, env));
+            this.callUserDefinedFunction(classEnv.lookup('constructor'), [instanceEnv, ...args]);
+
+            return instanceEnv;
+        }
+
+        // Super expressoin
+        // (super <classname>)
+        if (exp[0] === 'super') {
+            const [_, className] = exp;
+            return this.eval(className, env).parent;
+        }
+
+        // Property access
+        // (prop <instance> <name>)
+        if (exp[0] === 'prop') {
+            const [_tag, instance, name] = exp;
+            const instanceEnv = this.eval(instance, env);
+            return instanceEnv.lookup(name);
+        }
+
         // Function call
         if (Array.isArray(exp)) {
             // First arg is the function name. Call eval() to look up the function name
@@ -213,18 +271,7 @@ export default class Interpreter {
             }
 
             // User-defined functions
-            const activationRecord = new Map<string, any>();
-
-            fn.params.forEach((param: string, index: number) => {
-                activationRecord.set(param, args[index]);
-            });
-
-            const activationEnv = new Environment(
-                activationRecord,
-                fn.env, // captured environment
-            );
-
-            return this.evalBody(fn.body, activationEnv);
+            return this.callUserDefinedFunction(fn, args);
         }
 
         throw 'FIX ME';
