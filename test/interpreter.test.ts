@@ -1,6 +1,8 @@
 import Interpreter from "../src/interpreter";
 import parser from "../generated/parser";
 
+import fs from 'fs';
+
 describe('Interpreter Tests', () => {
 
     const test = (string: string): any => {
@@ -448,6 +450,52 @@ describe('Interpreter Tests', () => {
                     ((prop p calc) p)
                 )
             `)).toBe(60);
+        });
+
+        describe ('Module Tests', () => {
+            it('should define and use a module', () => {
+                expect(test(`
+                    (begin
+                        (module Math
+                            (begin
+                                (def square (x) 
+                                    (* x x))
+                            )
+                        )
+
+                        ((prop Math square) 2)
+                    )
+                `)).toBe(4)
+            });
+
+            it('should import a module from a file and use it', () => {
+                expect(test(`
+                    (begin
+                        (import Math)
+
+                        ((prop Math square) 2)
+                    )
+                `)).toBe(4);
+            });
+
+            it('should cache loaded modules', () => {
+                const fsSpy = jest.spyOn(fs, 'readFileSync').mockImplementation(() => {
+                    return '(def square (x) (* x x))';
+                });
+                test(`
+                    (begin
+                        (begin
+                            (import Math)
+
+                            ((prop Math square) 2)
+                        )
+                        (import Math)
+                        ((prop Math square) 2)
+                    )
+                `);
+                expect(fsSpy).toBeCalledTimes(1);
+            });
+            
         });
     });
 });

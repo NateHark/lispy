@@ -1,5 +1,8 @@
-import Environment from "./environment";
-import Transformer from "./transformer";
+import Environment from './environment';
+import Transformer from './transformer';
+import parser from '../generated/parser';
+
+import * as fs from 'fs';
 
 const GlobalEnvironment = () => {
     return new Environment(new Map<string, any>([
@@ -223,7 +226,7 @@ export default class Interpreter {
             const [_tag, name, parent, body] = exp;
            
             const parentEnv = this.eval(parent, env) || env;
-            const classEnv = new Environment(new Map<string, any>(), parentEnv);
+            const classEnv = new Environment(new Map(), parentEnv);
 
             this.evalBody(body, classEnv);
 
@@ -233,7 +236,7 @@ export default class Interpreter {
         // Class instantation
         if (exp[0] === 'new') {
             const classEnv = this.eval(exp[1], env);
-            const instanceEnv = new Environment(new Map<string, any>(), classEnv); 
+            const instanceEnv = new Environment(new Map(), classEnv); 
 
             const args = exp.slice(2).map((arg: any) => this.eval(arg, env));
             this.callUserDefinedFunction(classEnv.lookup('constructor'), [instanceEnv, ...args]);
@@ -254,6 +257,40 @@ export default class Interpreter {
             const [_tag, instance, name] = exp;
             const instanceEnv = this.eval(instance, env);
             return instanceEnv.lookup(name);
+        }
+
+        // Module declaration
+        // (module <name> <body>)
+        if (exp[0] === 'module') {
+            const [_tag, name, body] = exp;
+            const moduleEnv = new Environment(new Map(), env);
+            this.evalBody(body, moduleEnv);
+            return env.define(name, moduleEnv);
+        }
+
+        // Module import
+        // (import <name>)
+        if (exp[0] === 'import') {
+            const [_tag, name] = exp;
+            
+            let module: any;
+            try {
+                module = env.lookup(name);
+                if (module) {
+                    return module;
+                }
+            } catch {}
+
+            const moduleSrc = fs.readFileSync(
+                `${__dirname}/modules/${name}.lsp`,
+                'utf-8',
+            );
+
+            const body = parser.parse(`(begin ${moduleSrc})`);
+
+            const moduleExp = ['module', name, body];
+
+            return this.eval(moduleExp, this.global);
         }
 
         // Function call
