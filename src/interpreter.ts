@@ -271,26 +271,40 @@ export default class Interpreter {
         // Module import
         // (import <name>)
         if (exp[0] === 'import') {
-            const [_tag, name] = exp;
+            let [_tag, args, name] = exp;
+
+            // function imports were not specified
+            if (typeof(args) === 'string') {
+                name = args;
+            } 
+
             
             let module: any;
             try {
                 module = env.lookup(name);
-                if (module) {
-                    return module;
-                }
             } catch {}
 
-            const moduleSrc = fs.readFileSync(
-                `${__dirname}/modules/${name}.lsp`,
-                'utf-8',
-            );
+            if (!module) {
+                const moduleSrc = fs.readFileSync(
+                    `${__dirname}/modules/${name}.lsp`,
+                    'utf-8',
+                );
 
-            const body = parser.parse(`(begin ${moduleSrc})`);
+                const body = parser.parse(`(begin ${moduleSrc})`);
+                const moduleExp = ['module', name, body];
+                module = this.eval(moduleExp, this.global);
+            }
+ 
+            if (Array.isArray(args)) {
+                let result;
+                args.forEach(arg => {
+                   const varExp =  ['var', arg, ['prop', name, arg]];
+                   result = this.eval(varExp, env);
+                });
+                return result;
+            }
 
-            const moduleExp = ['module', name, body];
-
-            return this.eval(moduleExp, this.global);
+            return module;
         }
 
         // Function call

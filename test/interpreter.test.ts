@@ -478,6 +478,15 @@ describe('Interpreter Tests', () => {
                 `)).toBe(4);
             });
 
+            it('should import a function from a module and use it', () => {
+                expect(test(`
+                    (begin
+                        (import (square factorial) Math)
+                        (square (factorial 2))
+                    )
+                `)).toBe(4);
+            });
+
             it('should cache loaded modules', () => {
                 const fsSpy = jest.spyOn(fs, 'readFileSync').mockImplementation(() => {
                     return '(def square (x) (* x x))';
@@ -495,7 +504,6 @@ describe('Interpreter Tests', () => {
                 `);
                 expect(fsSpy).toBeCalledTimes(1);
             });
-            
         });
     });
 });
