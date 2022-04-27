@@ -7,3 +7,5 @@
         (* x (factorial (- x 1)))
     )
 )  
+
+(var PI 3.14159)

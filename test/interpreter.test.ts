@@ -13,9 +13,16 @@ describe('Interpreter Tests', () => {
     describe('Identity Tests', () => {
         it('should return numeric identity', () => {
             expect(test('1')).toBe(1);
+            expect(test('-1')).toBe(-1);
+            expect(test('0.1')).toBe(0.1);
+            expect(test('.1')).toBe(.1);
+            expect(test('-0.1')).toBe(-0.1);
+            expect(test('3.14159')).toBe(3.14159);
+            expect(test('-3.14159')).toBe(-3.14159);
         });
 
         it('should return string identity', () => {
+            expect(test('""')).toBe('');
             expect(test('"hello"')).toBe('hello');
         });
     });

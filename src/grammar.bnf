@@ -4,13 +4,13 @@
 
 %%
 
-\s+             /* skip whitespace */
+\s+                     /* skip whitespace */
 
-\"[^\"]*\"      return 'STRING'
+\"[^\"]*\"              return 'STRING'
 
-\d+             return 'NUMBER'
+(\-?\d+\.?\d*|\-?\.\d+) return 'NUMBER'
 
-[\w\-+*=<>/]+   return 'SYMBOL'
+[\w\-+*=<>/]+           return 'SYMBOL'
 
 /lex
 
