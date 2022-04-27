@@ -107,6 +107,13 @@ export default class Interpreter {
     }
 
     /**
+     * Evaluates an expression wrapped in a block 
+     */
+    evalGlobal(exp: any): any {
+        return this.evalBody(exp, this.global);
+    }    
+
+    /**
      * Evaluates an expression in the provided environment 
      */
     eval(exp: any, env: Environment = this.global): any {

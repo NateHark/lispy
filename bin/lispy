@@ -1,0 +1,32 @@
+#!/usr/bin/env node
+
+'use strict';
+
+const fs = require('fs');
+
+const parser = require('../dist/generated/parser');
+const Interpreter = require('../dist/src/interpreter').default;
+
+function evalGlobal(src, interpreter) {
+    const exp = parser.parse(`(begin ${src})`);
+    return interpreter.evalGlobal(exp);
+}
+
+function main(argv) {
+    const [_node, path, mode, exp] = argv;
+
+    const interpreter = new Interpreter();
+
+    // String eval
+    if (mode === '-e') {
+        return evalGlobal(exp, interpreter);
+    }
+
+    // Eval from file
+    if (mode === '-f') {
+        const src = fs.readFileSync(exp, 'utf-8');
+        return evalGlobal(src, interpreter);
+    }
+}
+
+main(process.argv);

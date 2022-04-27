@@ -3,6 +3,9 @@
   "version": "0.1.0",
   "description": "A parser and interpreter for a Lisp-like toy language",
   "main": "index.js",
+  "bin": {
+    "lispy": "./bin/lispy"
+  },
   "scripts": {
     "dev": "tsc-watch --onSuccess \"npm start\"",
     "start": "node ./dist/index.js",
