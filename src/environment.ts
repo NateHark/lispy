@@ -1,4 +1,4 @@
-export default class Environment {
+export default class Environment implements Environment {
     readonly record: Map<string, any>;
     readonly parent?: Environment;
 
@@ -7,8 +7,9 @@ export default class Environment {
         this.parent = parent;
     }
 
-    assign(name: string, value: any) {
+    assign(name: string, value: any): any {
         this.resolve(name).record.set(name, value);
+        return value;
     }
 
     define(name:string, value: any) {
