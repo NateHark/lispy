@@ -1,8 +1,8 @@
-export default class Environment implements Environment {
+export default class Scope implements Scope {
     readonly record: Map<string, any>;
-    readonly parent?: Environment;
+    readonly parent?: Scope;
 
-    constructor(record: Map<string, any> = new Map(), parent: Environment | undefined = undefined) {
+    constructor(record: Map<string, any> = new Map(), parent: Scope | undefined = undefined) {
         this.record = record;
         this.parent = parent;
     }
@@ -21,7 +21,7 @@ export default class Environment implements Environment {
         return this.resolve(name).record.get(name);
     }
 
-    resolve(name: string): Environment {
+    resolve(name: string): Scope {
         if (this.record.has(name)) {
             return this;
         }

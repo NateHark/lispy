@@ -1,11 +1,12 @@
-import Environment from './environment';
+import Scope from './scope';
 import Transformer from './transformer';
 import parser from '../generated/parser';
 
 import * as fs from 'fs';
+import { InvalidSyntaxError } from './exceptions';
 
 const GlobalEnvironment = () => {
-    return new Environment(new Map<string, any>([
+    return new Scope(new Map<string, null | boolean | Function>([
         ['null', null],
 
         ['true', true],
@@ -73,27 +74,27 @@ export default class Interpreter {
         return literal.slice(1, -1);
     }
     
-    private evalIncrementExpression(exp: ListExpression, env: Environment): Expression {
+    private evalIncrementExpression(exp: IncrementExpression, env: Scope): Expression {
         const assignmentExp = this.transformer.transformIncrementToAssignment(exp);
         return this.eval(assignmentExp, env);
     }
 
-    private evalIncrementByValueExpression(exp: ListExpression, env: Environment): Expression {
+    private evalIncrementByValueExpression(exp: IncrementByValueExpression, env: Scope): Expression {
         const assignmentExp = this.transformer.transformIncrementByValueToAssignment(exp);
         return this.eval(assignmentExp, env);
     }
     
-    private evalDecrementExpression(exp: ListExpression, env: Environment): Expression {
+    private evalDecrementExpression(exp: DecrementExpression, env: Scope): Expression {
         const assignmentExp = this.transformer.transformDecrementToAssignment(exp);
         return this.eval(assignmentExp, env);
     }
 
-    private evalDecrementByValueExpression(exp: ListExpression, env: Environment): Expression {
+    private evalDecrementByValueExpression(exp: DecrementByValueExpression, env: Scope): Expression {
         const assignmentExp = this.transformer.transformDecrementByValueToAssignment(exp);
         return this.eval(assignmentExp, env);
     }
 
-    private evalFunctionCall(exp: ListExpression, env: Environment): Expression {
+    private evalFunctionCall(exp: ListExpression, env: Scope): Expression {
         // First arg is the function name. Call eval() to look up the function name in the environment
         const fn = this.eval(exp[0], env);
 
@@ -106,20 +107,25 @@ export default class Interpreter {
         }
 
         // User-defined functions
-        return this.callUserDefinedFunction(fn as LambdaExpression, args);
+        return this.callUserDefinedFunction(fn as FunctionDefinition, args);
     }
 
-    private evalAssignmentExpression(exp: ListExpression, env: Environment): Expression {
+    private evalVarExpression(exp: VarExpression, env: Scope): Expression {
+        const [_, name, value] = exp;
+        return env.define(name, this.eval(value, env));
+    }
+
+    private evalSetExpression(exp: SetExpression, env: Scope): Expression {
         const [_, ref, value] = exp;
         if (ref[0] === 'prop') {
             const [_tag, instance, propName] = ref;
-            const instanceEnv = this.eval(instance, env) as Environment;
+            const instanceEnv = this.eval(instance, env) as Scope;
             return instanceEnv.define(propName, this.eval(value, env));
         }
         return env.assign(ref, this.eval(value, env));
     }
     
-    private evalIfExpression(exp: ListExpression, env: Environment): Expression {
+    private evalIfExpression(exp: IfExpression, env: Scope): Expression {
         const [_, condition, consequent, alternate] = exp;
         if (this.eval(condition, env)) {
             return this.eval(consequent, env);
@@ -127,18 +133,18 @@ export default class Interpreter {
         return this.eval(alternate, env);
     }
 
-    private evalSwitchExpression(exp: ListExpression, env: Environment): Expression {
+    private evalSwitchExpression(exp: SwitchExpression, env: Scope): Expression {
         const ifExp = this.transformer.transformSwitchToIf(exp);
         return this.eval(ifExp, env);
     }
 
-    private evalForExpression(exp: ListExpression, env: Environment): Expression {
+    private evalForExpression(exp: ForExpression, env: Scope): Expression {
         const whileExp = this.transformer.transformForToWhile(exp);
         return this.eval(whileExp, env);
     }
 
-    private evalWhileExpression(exp: ListExpression, env: Environment): Expression {
-        const [_tag, condition, body] = exp;
+    private evalWhileExpression(exp: WhileExpression, env: Scope): Expression {
+        const [_, condition, body] = exp;
         let result: Expression;
         while(this.eval(condition, env)) {
             result = this.eval(body, env);
@@ -146,12 +152,12 @@ export default class Interpreter {
         return result!;
     }
 
-    private evalDefExpression(exp: ListExpression, env: Environment): Expression {
+    private evalDefExpression(exp: DefExpression, env: Scope): Expression {
         const varExp = this.transformer.transformDefToVarLambda(exp);
         return this.eval(varExp, env);
     }
 
-    private evalLambdaExpression(exp: ListExpression, env: Environment): Expression {
+    private evalLambdaExpression(exp: LambdaExpression, env: Scope): FunctionDefinition {
         const [_, params, body] = exp;
         return {
             params,
@@ -160,46 +166,46 @@ export default class Interpreter {
         };
     }
 
-    private evalClassExpression(exp: ListExpression, env: Environment): Expression {
+    private evalClassExpression(exp: ClassExpression, env: Scope): Expression {
         // Class declaration
         const [_, name, parent, body] = exp;
-        const parentEnv = this.eval(parent, env) as Environment || env;
-        const classEnv = new Environment(new Map(), parentEnv);
+        const parentEnv = this.eval(parent, env) as Scope || env;
+        const classEnv = new Scope(new Map(), parentEnv);
 
         this.evalBody(body, classEnv);
 
         return env.define(name, classEnv);
     }
 
-    private evalClassInstantiationExpression(exp: ListExpression, env: Environment): Expression {
-        const classEnv = this.eval(exp[1], env) as Environment;
-        const instanceEnv = new Environment(new Map(), classEnv); 
-        const args = exp.slice(2).map((arg: any) => this.eval(arg, env));
+    private evalClassInstantiationExpression(exp: ClassInstantiationExpression, env: Scope): Expression {
+        const classEnv = this.eval(exp[1], env) as Scope;
+        const instanceEnv = new Scope(new Map(), classEnv); 
+        const args = exp.slice(2).map((arg: Expression) => this.eval(arg, env));
 
         this.callUserDefinedFunction(classEnv.lookup('constructor'), [instanceEnv, ...args]);
 
         return instanceEnv;
     }
 
-    private evalSuperExpression(exp: ListExpression, env: Environment): Expression {
+    private evalSuperExpression(exp: SuperExpression, env: Scope): Expression {
         const [_, className] = exp;
-        return (this.eval(className, env) as Environment).parent!;
+        return (this.eval(className, env) as Scope).parent!;
     }
 
-    private evalPropExpression(exp: ListExpression, env: Environment): Expression {
+    private evalPropExpression(exp: PropExpression, env: Scope): Expression {
         const [_, instance, name] = exp;
-        const instanceEnv = this.eval(instance, env) as Environment;
+        const instanceEnv = this.eval(instance, env) as Scope;
         return instanceEnv.lookup(name);
     }
 
-    private evalModuleExpression(exp: ListExpression, env: Environment): Expression {
-        const [_tag, name, body] = exp;
-        const moduleEnv = new Environment(new Map(), env);
+    private evalModuleExpression(exp: ModuleExpression, env: Scope): Expression {
+        const [_, name, body] = exp;
+        const moduleEnv = new Scope(new Map(), env);
         this.evalBody(body, moduleEnv);
         return env.define(name, moduleEnv);
     }
 
-    private evalImportExpression(exp: ListExpression, env: Environment): Expression {
+    private evalImportExpression(exp: ImportExpression, env: Scope): Expression {
         let [_, args, name] = exp;
 
         // function imports were not specified
@@ -236,99 +242,97 @@ export default class Interpreter {
         return module;
     }
 
-    private evalListExpression(exp: ListExpression, env: Environment): Expression {
+    private evalListExpression(exp: ListExpression, env: Scope): Expression {
         switch (exp[0]) {
             case '++': {
-                return this.evalIncrementExpression(exp, env);
+                return this.evalIncrementExpression(exp as IncrementExpression, env);
             }
             case '+=': {
-                return this.evalIncrementByValueExpression(exp, env);
+                return this.evalIncrementByValueExpression(exp as IncrementByValueExpression, env);
             }
             case '--': {
-                return this.evalDecrementExpression(exp, env);
+                return this.evalDecrementExpression(exp as DecrementExpression, env);
             }
             case '-=': {
-                return this.evalDecrementByValueExpression(exp, env);
+                return this.evalDecrementByValueExpression(exp as DecrementByValueExpression, env);
             }
             case 'begin': {
-                const blockEnv = new Environment(new Map(), env);
-                return this.evalBlock(exp, blockEnv);
+                const blockEnv = new Scope(undefined, env);
+                return this.evalBlockExpression(exp as BlockExpression, blockEnv);
             }
             case 'var': {
-                const [_, name, value] = exp;
-                return env.define(name, this.eval(value, env));
+                return this.evalVarExpression(exp as VarExpression, env);
             }
             case 'set': {
-                return this.evalAssignmentExpression(exp, env);
+                return this.evalSetExpression(exp as SetExpression, env);
             }
             case 'if': {
-                return this.evalIfExpression(exp, env);
+                return this.evalIfExpression(exp as IfExpression, env);
             }
             case 'switch': {
-                return this.evalSwitchExpression(exp, env);
+                return this.evalSwitchExpression(exp as SwitchExpression, env);
             }
             case 'for': {
-                return this.evalForExpression(exp, env);
+                return this.evalForExpression(exp as ForExpression, env);
             }
             case 'while': {
-                return this.evalWhileExpression(exp, env);
+                return this.evalWhileExpression(exp as WhileExpression, env);
             }
             case 'def': {
-                return this.evalDefExpression(exp, env);
+                return this.evalDefExpression(exp as DefExpression, env);
             }
             case 'lambda': {
-                return this.evalLambdaExpression(exp, env);
+                return this.evalLambdaExpression(exp as LambdaExpression, env);
             }
             case 'class': {
-                return this.evalClassExpression(exp, env);
+                return this.evalClassExpression(exp as ClassExpression, env);
             }
             case 'new': {
-                return this.evalClassInstantiationExpression(exp, env);
+                return this.evalClassInstantiationExpression(exp as ClassInstantiationExpression, env);
             }
             case 'super': {
-                return this.evalSuperExpression(exp, env);
+                return this.evalSuperExpression(exp as SuperExpression, env);
             }
             case 'prop': {
-                return this.evalPropExpression(exp, env);
+                return this.evalPropExpression(exp as PropExpression, env);
             }
             case 'module': {
-                return this.evalModuleExpression(exp, env);
+                return this.evalModuleExpression(exp as ModuleExpression, env);
             }
             case 'import': {
-                return this.evalImportExpression(exp, env);
+                return this.evalImportExpression(exp as ImportExpression, env);
             }
             default:
                 return this.evalFunctionCall(exp, env);
         } 
     }
 
-    private evalBlock(block: any, env: Environment): any {
-        let result;
+    private evalBlockExpression(blockExpression: BlockExpression, env: Scope): Expression {
+        const [_, ...expressions] = blockExpression;
 
-        const [_tag, ...expressions] = block;
-
-        expressions.forEach((exp: any) => {
+        let result: Expression;
+        expressions.forEach((exp: Expression) => {
             result = this.eval(exp, env);
         }); 
 
-        return result;
+        return result!;
     }
 
-    private evalBody(body: any, env: Environment): any {
-        if (body[0] === 'begin') {
-            return this.evalBlock(body, env);
+    private evalBody(body: Expression, env: Scope): Expression {
+        if (Array.isArray(body) && body[0] === 'begin') {
+            return this.evalBlockExpression(body as BlockExpression, env);
         }
         return this.eval(body, env);
     }
 
-    private callUserDefinedFunction(fn: LambdaExpression, args: Expression[]): Expression {
+    private callUserDefinedFunction(fn: FunctionDefinition, args: Expression[]): Expression {
         const activationRecord = new Map<string, any>();
 
         fn.params.forEach((param: string, index: number) => {
             activationRecord.set(param, args[index]);
         });
 
-        const activationEnv = new Environment(
+        const activationEnv = new Scope(
             activationRecord,
             fn.env, // captured environment
         );
@@ -336,7 +340,7 @@ export default class Interpreter {
         return this.evalBody(fn.body, activationEnv);
     }
 
-    readonly global: Environment;
+    readonly global: Scope;
     readonly transformer: Transformer;
 
     constructor(global = GlobalEnvironment()) {
@@ -347,14 +351,14 @@ export default class Interpreter {
     /**
      * Evaluates an expression wrapped in a block 
      */
-    evalGlobal(exp: any): any {
+    evalGlobal(exp: Expression): Expression {
         return this.evalBody(exp, this.global);
     }    
 
     /**
      * Evaluates an expression in the provided environment 
      */
-    eval(exp: Expression, env: Environment = this.global): Expression {
+    eval(exp: Expression, env: Scope = this.global): Expression {
         // Numeric literal
         if (this.isNumber(exp)) {
             return this.evalNumericLiteral(exp as NumericLiteral);
@@ -376,6 +380,6 @@ export default class Interpreter {
             return this.evalListExpression(exp as ListExpression, env);
         }
 
-        throw `Unknown expression: ${JSON.stringify(exp)}`;
+        throw new InvalidSyntaxError(`Unknown expression: ${JSON.stringify(exp)}`);
     }
 }

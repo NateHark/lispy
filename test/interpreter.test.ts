@@ -26,80 +26,13 @@ describe('Interpreter Tests', () => {
             expect(test('"hello"')).toBe('hello');
         });
     });
-
-    describe('Math Operator Tests', () => {
-        it('should apply + operator', () => {
-            expect(test('(+ 1 2)')).toBe(3);
-        });
-
-        it('should apply + operator', () => {
-            expect(test('(+ 1 (+ 2 3))')).toBe(6);
-        });
-
-        it('should apply - operator', () => {
-            expect(test('(- 2 1)')).toBe(1);
-        });
-
-        it('should apply - operator', () => {
-            expect(test('(- 1 (- 3 2))')).toBe(0);
-        });
-
-        it('should apply * operator', () => {
-            expect(test('(* 1 2)')).toBe(2);
-        });
-
-        it('should apply * operator', () => {
-            expect(test('(* 1 (* 2 3))')).toBe(6);
-        });
-
-        it('should apply / operator', () => {
-            expect(test('(/ 4 2)')).toBe(2);
-        });
-
-        it('should apply / operator', () => {
-            expect(test('(/ 8 (/ 12 3))')).toBe(2);
-        });
-    });
-
-    describe('Comparison Operator Tests', () => {
-        it('should apply > operator', () => {
-            expect(test('(> 2 2)')).toBe(false);
-            expect(test('(> 2 1)')).toBe(true);
-            expect(test('(> 1 2)')).toBe(false);
-        });
-
-        it('should apply >= operator', () => {
-            expect(test('(>= 0 1)')).toBe(false);
-            expect(test('(>= 1 1)')).toBe(true);
-            expect(test('(>= 2 1)')).toBe(true);
-        });
-
-        it('should apply < operator', () => {
-            expect(test('(< 2 2)')).toBe(false);
-            expect(test('(< 2 1)')).toBe(false);
-            expect(test('(< 1 2)')).toBe(true);
-        });
-
-        it('should apply <= operator', () => {
-            expect(test('(<= 0 1)')).toBe(true);
-            expect(test('(<= 1 1)')).toBe(true);
-            expect(test('(<= 2 1)')).toBe(false);
-        });
-
-        it('should apply = operator', () => {
-            expect(test('(= 0 1)')).toBe(false);
-            expect(test('(= 1 1)')).toBe(true);
-        });
-    });
-
+   
     describe('Variable Tests', () => {
         it('should define a variable', () => {
-            const interpreter = new Interpreter();
             expect(test('(var foo 3)')).toBe(3);
         });
 
         it('should define a variable with complex sub-expression', () => {
-            const interpreter = new Interpreter();
             expect(test('(var foo (+ 1 2))')).toBe(3);
         });
     });
@@ -197,35 +130,53 @@ describe('Interpreter Tests', () => {
 
     describe('Built-in Function Tests', () => {
         it('should execute + function', () => {
-             expect(test('(+ 1 5)')).toBe(6); 
-        });
-
-        it('should execute + function', () => {
+            expect(test('(+ 1 1)')).toBe(2); 
             expect(test('(+ (+ 2 3) 5)')).toBe(10);
         });
 
-        it('should execute + function', () => {
-            expect(test('(+ (* 2 3) 5)')).toBe(11);
-        });
-
         it('should execute > function', () => {
-             expect(test('(> 1 5)')).toBe(false);
+             expect(test('(> 1 2)')).toBe(false);
+             expect(test('(> 2 1)')).toBe(true);
         });
 
         it('should execute < function', () => {
-             expect(test('(< 1 5)')).toBe(true);
+             expect(test('(< 1 2)')).toBe(true);
+             expect(test('(< 2 1)')).toBe(false);
         });
 
         it('should execute >= function', () => {
             expect(test('(>= 5 5)')).toBe(true);
+            expect(test('(>= 4 5)')).toBe(false);
         });
 
         it('should execute <= function', () => {
             expect(test('(<= 5 5)')).toBe(true);
+            expect(test('(<= 6 5)')).toBe(false);
         });
         
         it('should execute = function', () => {
             expect(test('(= 5 5)')).toBe(true);
+            expect(test('(= 5 1)')).toBe(false);
+        });
+
+        it('should execute ++ function', () => {
+            expect(test(`
+                (begin
+                    (var x 1)
+                    (++ x)
+                    x
+                )
+                `)).toBe(2);
+        });
+
+        it('should execute -- function', () => {
+            expect(test(`
+                (begin
+                    (var x 2)
+                    (-- x)
+                    x
+                )
+                `)).toBe(1);
         });
 
         it('should execute print function', () => {
@@ -269,7 +220,17 @@ describe('Interpreter Tests', () => {
     });
     
     describe('Lambda Function Tests', () => {
-        it('should execute lambda function', () => {
+        it('should execute no-arg lambda function', () => {
+            const consoleSpy = jest.spyOn(console, 'log');
+            test(
+                `
+                ((lambda () (print "hello world")))
+                `
+            );
+            expect(consoleSpy).toHaveBeenCalledWith('hello world');
+        });
+
+        it('should execute lambda function as reference', () => {
             expect(test(
                 `(begin
                     (def handler (callback)
@@ -325,11 +286,12 @@ describe('Interpreter Tests', () => {
                 `(begin
                     (var x 1)
                     (switch ((> x 1) 100)
-                            ((= x 1) 200)
+                            ((= x 1) (+ 100 1))
+                            ((< x 1) 300)
                             (else 0))
                 )
                 `
-            )).toBe(200);
+            )).toBe(101);
         });
 
         it('should return the default condition', () => {
@@ -375,6 +337,17 @@ describe('Interpreter Tests', () => {
                 (begin
                     (var x 0)
                     (+= x 2)
+                    x
+                )
+            `)).toBe(2);
+        });        
+
+        it('should increment x by y', () => {
+            expect(test(`
+                (begin
+                    (var x 0)
+                    (var y 2)
+                    (+= x y)
                     x
                 )
             `)).toBe(2);

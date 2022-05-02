@@ -1,10 +1,10 @@
 export default class Transformer {
-    transformDefToVarLambda(defExp: ListExpression): ListExpression {
-        const [_tag, name, params, body] = defExp;
+    transformDefToVarLambda(defExp: DefExpression): VarExpression {
+        const [_, name, params, body] = defExp;
         return ['var', name, ['lambda', params, body]];
     }
 
-    transformSwitchToIf(switchExp: ListExpression): ListExpression {
+    transformSwitchToIf(switchExp: SwitchExpression): ListExpression {
         const [_tag, ...cases] = switchExp;
 
         const ifExp: ListExpression = ['if', null, null, null];
@@ -28,29 +28,28 @@ export default class Transformer {
         return ifExp;
     }
 
-    transformForToWhile(forExp: ListExpression): ListExpression {
-        const [_tag, init, condition, modifier, exp] = forExp;
+    transformForToWhile(forExp: ForExpression): BlockExpression {
+        const [_, init, condition, modifier, exp] = forExp;
 
         return ['begin', init, ['while', condition, ['begin', exp, modifier]]];
     }
 
-    transformIncrementToAssignment(incExp: ListExpression): ListExpression {
+    transformIncrementToAssignment(incExp: IncrementExpression): SetExpression {
         const [_tag, name] = incExp;
-
         return ['set', name, ['+', name, 1]];
     }
 
-    transformIncrementByValueToAssignment(incExp: ListExpression): ListExpression {
+    transformIncrementByValueToAssignment(incExp: IncrementByValueExpression): SetExpression {
         const [_tag, name, value] = incExp;
         return ['set', name, ['+', name, value]];
     }
 
-    transformDecrementToAssignment(decExp: ListExpression): ListExpression {
+    transformDecrementToAssignment(decExp: DecrementExpression): SetExpression {
         const [_tag, name] = decExp;
         return ['set', name, ['-', name, 1]];
     }
 
-    transformDecrementByValueToAssignment(decExp: ListExpression): ListExpression {
+    transformDecrementByValueToAssignment(decExp: DecrementByValueExpression): SetExpression {
         const [_tag, name, value] = decExp;
         return ['set', name, ['-', name, value]];
     }
