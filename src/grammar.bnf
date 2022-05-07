@@ -10,7 +10,7 @@
 
 (\-?\d+\.?\d*|\-?\.\d+) return 'NUMBER'
 
-[\w\-+*=<>/]+           return 'SYMBOL'
+[\w\-+*=<>/%]+          return 'SYMBOL'
 
 /lex
 

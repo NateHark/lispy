@@ -41,6 +41,12 @@ const GlobalEnvironment = () => {
           return op1 / op2;
         },
       ],
+      [
+        "%",
+        (op1: number, op2: number) => {
+          return op1 % op2;
+        },
+      ],
 
       // Comparison functions
       [
@@ -95,7 +101,7 @@ export default class Interpreter {
 
   private isVariableName(exp: Expression): boolean {
     return (
-      typeof exp === "string" && /^[+\-*/<>=a-zA-Z0-9_]*$/.exec(exp) !== null
+      typeof exp === "string" && /^[+\-*/%<>=a-zA-Z0-9_]*$/.exec(exp) !== null
     );
   }
 

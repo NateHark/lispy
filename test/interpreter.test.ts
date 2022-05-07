@@ -139,9 +139,19 @@ describe('Interpreter Tests', () => {
             expect(test('(- 1)')).toBe(-1);
         });
 
+        it('should execute * function', () => {
+            expect(test('(* 2 3)')).toBe(6); 
+            expect(test('(* 6 0)')).toBe(0);
+        });
+
         it('should execute / function', () => {
             expect(test('(/ 6 2)')).toBe(3); 
             expect(test('(/ 2 4)')).toBe(0.5);
+        });
+
+        it('should execute % function', () => {
+            expect(test('(% 6 2)')).toBe(0); 
+            expect(test('(% 6 5)')).toBe(1);
         });
 
         it('should execute > function', () => {
