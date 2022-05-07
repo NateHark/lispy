@@ -37,6 +37,12 @@ type DecrementByValueExpression = ['-=', string, string | number];
 // (set x 1)
 type SetExpression = ['set', string, Expression];
 
+// (and true true)
+type AndExpression = ['and', Expression, Expression];
+
+// (or true true)
+type OrExpression = ['or', Expression, Expression];
+
 // (begin ...)
 type BlockExpression = ['begin', ...Expression[]];
 

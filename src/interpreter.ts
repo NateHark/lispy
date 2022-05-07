@@ -179,6 +179,16 @@ export default class Interpreter {
     return env.assign(ref, this.eval(value, env));
   }
 
+  private evalAndExpression(exp: AndExpression, env: Scope): Expression {
+    const [_, leftExpression, rightExpression] = exp;
+    return this.eval(leftExpression, env) && this.eval(rightExpression, env);
+  }
+
+  private evalOrExpression(exp: OrExpression, env: Scope): Expression {
+    const [_, leftExpression, rightExpression] = exp;
+    return this.eval(leftExpression, env) || this.eval(rightExpression, env);
+  }
+
   private evalIfExpression(exp: IfExpression, env: Scope): Expression {
     const [_, condition, consequent, alternate] = exp;
     if (this.eval(condition, env)) {
@@ -333,6 +343,12 @@ export default class Interpreter {
       }
       case "set": {
         return this.evalSetExpression(exp as SetExpression, env);
+      }
+      case "and": {
+        return this.evalAndExpression(exp as AndExpression, env);
+      }
+      case "or": {
+        return this.evalOrExpression(exp as OrExpression, env);
       }
       case "if": {
         return this.evalIfExpression(exp as IfExpression, env);

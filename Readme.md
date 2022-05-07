@@ -37,4 +37,3 @@ The following section demonstrates some of the supported language features. For 
 ```bash
 $ ./bin/lispy -f fizzbuzz.lspy
 ```
-

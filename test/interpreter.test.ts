@@ -95,6 +95,56 @@ describe('Interpreter Tests', () => {
         });
     });
 
+    describe('Logical Operator Tests', () => {
+        it('should evaluate and expression', () => {
+            expect(test(`
+            (and true true)
+            `)).toBe(true);
+        });
+
+        it('should evaluate and expression', () => {
+            expect(test(`
+            (and false true)
+            `)).toBe(false);
+        });
+            
+        it('should evaluate and expression', () => {
+            expect(test(`
+            (and false false)
+            `)).toBe(false);
+        });
+
+        it('should evaluate and expression', () => {
+            expect(test(`
+            (and (> 1 0) (> 10 5))
+            `)).toBe(true);
+        });
+
+        it('should evaluate or expression', () => {
+            expect(test(`
+            (or true true)
+            `)).toBe(true);
+        });
+
+        it('should evaluate or expression', () => {
+            expect(test(`
+            (or false true)
+            `)).toBe(true);
+        });
+            
+        it('should evaluate or expression', () => {
+            expect(test(`
+            (or false false)
+            `)).toBe(false);
+        });
+
+        it('should evaluate or expression', () => {
+            expect(test(`
+            (or (> 1 0) (< 10 5))
+            `)).toBe(true);
+        });
+    });
+
     describe('Conditional Expression Tests', () => {
         it('should evaluate if expression', () => {
             expect(test(`
