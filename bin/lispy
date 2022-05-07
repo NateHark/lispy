@@ -5,7 +5,7 @@
 const fs = require('fs');
 
 const Parser = require('../dist/generated/parser');
-const Interpreter = require('../dist/');
+const Interpreter = require('../dist/src/interpreter').default;
 
 function evalGlobal(src, interpreter) {
     const exp = Parser.parse(`(begin ${src})`);
