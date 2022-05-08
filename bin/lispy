@@ -3,30 +3,55 @@
 'use strict';
 
 const fs = require('fs');
+const { exit } = require('process');
+const readline = require('readline');
 
 const Parser = require('../dist').Parser;
 const Interpreter = require('../dist').Interprter;
+
+const rl = readline.createInterface(process.stdin, process.stdout);
+const readInput = (input) => new Promise((res, rej) => {
+    rl.question(input, output => {
+        res(output);
+    });
+});
 
 function evalGlobal(src, interpreter) {
     const exp = Parser.parse(`(begin ${src})`);
     return interpreter.evalGlobal(exp);
 }
 
-function main(argv) {
-    const [_node, path, mode, exp] = argv;
+function isPrintableValue(value) {
+    return value != null && (typeof(value) === 'string' || typeof(value) === 'number' || typeof(value) === 'boolean');
+}
 
+(async function main(argv) {
+    const [_node, _path, mode, exp] = argv;
     const interpreter = new Interpreter();
-
-    // String eval
-    if (mode === '-e') {
-        console.log(evalGlobal(exp, interpreter));
-    }
 
     // Eval from file
     if (mode === '-f') {
         const src = fs.readFileSync(exp, 'utf-8');
         console.log(evalGlobal(src, interpreter));
+        rl.close();
+        return;
     }
-}
 
-main(process.argv);
+    // REPL mode
+    console.log('lispy REPL. Type \'exit\' to quit');
+    let input = '';
+    let output = '';
+    while (true) {
+        input = await readInput('> ');
+        if (input === 'exit') break;
+        try {
+            output = evalGlobal(input, interpreter);
+            if (isPrintableValue(output)) {
+                console.log(output);
+            }
+        } catch(e) {
+            console.log(e);
+        }
+    }
+    rl.close();
+})(process.argv);
